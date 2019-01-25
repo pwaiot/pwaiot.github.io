@@ -1,7 +1,7 @@
 {
-  "name": "vfc_aquacontrol",
+  "name": "vfc_pwaiot",
   "version": "1.0.0",
-  "description": "vfc_aquacontrol esp8266 esp32",
+  "description": "Vfc PWA IOT esp8266 esp32",
   "main": "srv/index.html",
   "directories": {
     "lib": "lib"

@@ -1,6 +1,6 @@
 {
-  "name": "Vfc AquaControl",
-  "short_name": "AquaControl",
+  "name": "Vfc PWA IOT",
+  "short_name": "VfcPwaIot",
   "theme_color": "#1777c4",
   "background_color": "#2196f3",
   "display": "standalone",
