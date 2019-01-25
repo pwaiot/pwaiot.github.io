@@ -10,7 +10,7 @@
     {
       "src": "statics/icons/favicon.ico",
       "sizes": "16x16",
-      "type": "image/ico"
+      "type": "image/x-icon"
     },
     {
       "src": "statics/icons/favicon16.png",
