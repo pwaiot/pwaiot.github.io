@@ -1,0 +1,9 @@
+
+200.150.70.147:3390
+ARMAZEM/Administrador
+Lumens#@!
+
+200.150.70.147:3390
+user: strada
+pwd: STR@sup?
+
