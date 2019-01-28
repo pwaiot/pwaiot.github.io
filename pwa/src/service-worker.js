@@ -17,7 +17,7 @@ importScripts(
   "precache-manifest.js"
 );
 
-workbox.core.setCacheNameDetails({prefix: "VfcAccellogPwaIot"});
+workbox.core.setCacheNameDetails({prefix: "VfcPwaIot"});
 
 /**
  * The workboxSW.precacheAndRoute() method efficiently caches and responds to

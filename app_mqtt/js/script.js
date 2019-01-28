@@ -7,11 +7,11 @@ var topicDsBrd = 'Vfc/Accellog/Lab/Developer/PWAIoT/Test01/Dashboard';
 var topicCmd   = 'Vfc/Accellog/Lab/Developer/PWAIoT/Test01/Commands';
 
 var mqttURI  = '';  //eclipse - ws://iot.eclipse.org:443/ws' - if config, ignore host/port/path;
-var mqttHost = (localStorage.getItem('pwaiot-mqttHost') || 'iot.eclipse.org');
-var mqttPort = Number(localStorage.getItem('pwaiot-mqttPort') || 443);
+var mqttHost = (localStorage.getItem('vfcmqtt-mqttHost') || 'iot.eclipse.org');
+var mqttPort = Number(localStorage.getItem('vfcmqtt-mqttPort') || 443);
 var mqttPath = '/ws';  //eclipse - '/ws'
-var mqttUser = (localStorage.getItem('pwaiot-mqttUser') || ''); //eclipse - '' (empty)
-var mqttPwd  = (localStorage.getItem('pwaiot-mqttPwd' ) || ''); //eclipse - '' (empty)
+var mqttUser = (localStorage.getItem('vfcmqtt-mqttUser') || ''); //eclipse - '' (empty)
+var mqttPwd  = (localStorage.getItem('vfcmqtt-mqttPwd' ) || ''); //eclipse - '' (empty)
 var mqttUseSSL = true; //SSL
 var mqttVersion = 4;
 var mqttTimeout = 5;
@@ -19,13 +19,10 @@ var mqttTimeout = 5;
 
 //console.log('port:', mqttPort);
 
-var btnAbrirPorta = document.getElementById('btnAbrirPorta');
-var btnLigarLEDs  = document.getElementById('btnLigarLEDs');
-
 var btnSaveConfig = document.getElementById('btnSaveConfig');
 var btnReconnect  = document.getElementById('btnReconnect');
 
-var recebendo = false; //impedir q seja enviado novamente um comando enquanto está recebendo um status do mesmo - exemplo on/off luz
+//var recebendo = false; //impedir q seja enviado novamente um comando enquanto está recebendo um status do mesmo - exemplo on/off luz
 
 $('#configHost').val(mqttHost);
 $('#configPort').val(mqttPort);
@@ -88,7 +85,7 @@ client._disconnected = function () {
 
 //Gets called whenever you receive a message for your subscriptions
 client.onMessageArrived = function (message) {
-  recebendo = true; //para não processar o click quando está recebendo a mensagem
+  //recebendo = true; //para não processar o click quando está recebendo a mensagem
 
   try {
     if (message.destinationName == topicDsBrd) {
@@ -97,21 +94,14 @@ client.onMessageArrived = function (message) {
       var obj = jsonRetMsg;
       obj = JSON.parse(message.payloadString);
 
-      console.log('objeto recebido: ');
-      console.log(obj);
-      mqtt_PrintOnlyToLog(obj.cmd);
-      mqtt_PrintOnlyToLog(obj.value);
+      //console.log('objeto recebido: ');
+      //console.log(obj);
+      mqtt_PrintAndShowLogMsg('Tópico: ' + message.destinationName);
+      mqtt_PrintAndShowLogMsg('objeto recebido: ');
+      mqtt_PrintAndShowLogMsg(JSON.stringify(obj));
+      //mqtt_PrintAndShowLogMsg(obj.cmd);
+      //mqtt_PrintAndShowLogMsg(obj.value);
 
-      /*
-      if (obj.cmd == 'a1-temp') {
-        mqtt_A1_PrintTemp(obj.value);
-      } else if (obj.cmd == 'a1-luz-on') {
-        $( "#a1_luz").prop('checked', (obj.value == 'true'));
-      } else {
-        mqtt_A0_PrintMsg(obj.cmd);
-        mqtt_A0_PrintMsg(obj.value);
-      }
-      */
     } else {
       console.log('tópico não encontrado: ' + message.destinationName)
     }
@@ -120,7 +110,7 @@ client.onMessageArrived = function (message) {
     console.log("Error: " + err + ".");
   }
   finally {
-    recebendo = false;
+    //recebendo = false;
   }
 };
 
@@ -155,30 +145,30 @@ function mqtt_OnFailure(message) {
 }
 
 function mqtt_Subscribe() {
+  mqtt_PrintAndShowLogMsg('Se inscrevendo em: ' + topicDsBrd);
   client.subscribe(topicDsBrd,
     {
       qos: 2,
       onSuccess: callBack_OnSubscribe
     }
   );
+
+  mqtt_PrintAndShowLogMsg('Se inscrevendo em: ' + topicCmd);
+  client.subscribe(topicCmd,
+    {
+      qos: 2,
+      onSuccess: callBack_OnSubscribeCmd
+    }
+  );
 }
 
 function callBack_OnSubscribe(invocationContext, grantedQos) {
-  mqtt_PrintOnlyToLog('Pronto');
-
-  //aqui pode ser colocado algum comando inicial, após conectar
-  /*setTimeout(function() {
-    mqtt_Publish_InitialCmd();
-  }, 500);*/
+  mqtt_PrintAndShowLogMsg('Inscrito em: ' + topicDsBrd);
 }
 
-/* function mqtt_Publish_InitialCmd() {
-  //request initial values
-  var cmd = jsonMsg;
-  cmd.cmd = "initvalues";
-  cmd.value = "true";
-  publish(cmd,topicCmd,2);
-} */
+function callBack_OnSubscribeCmd(invocationContext, grantedQos) {
+  mqtt_PrintAndShowLogMsg('Inscrito em: ' + topicCmd);
+}
 
 function mqtt_Publish_Cmd(cmd) {
   publish(cmd,topicCmd,2);
@@ -193,51 +183,20 @@ function mqtt_Disconnect() {
 }
 
 function mqtt_PrintAndShowLogMsg(msg) {
-  mqtt_PrintOnlyToLog(msg);
-  $("#edt_server_msg").val(msg);
-}
-
-function mqtt_PrintOnlyToLog(msg) {
   console.log(msg);
   $('#divlogs').prepend('<span>' + msg + '</span><br/>');
+  $("#edt_server_msg").val(msg);
 }
 
 var saveConfig = function () {
   /* saved in the localStorage form data */
-  localStorage.setItem("pwaiot-mqttHost", $('#configHost').val());
-  localStorage.setItem("pwaiot-mqttPort", $('#configPort').val());
-  localStorage.setItem("pwaiot-mqttUser", $('#configUser').val());
-  localStorage.setItem("pwaiot-mqttPwd" , $('#configPwd' ).val());
+  localStorage.setItem("vfcmqtt-mqttHost", $('#configHost').val());
+  localStorage.setItem("vfcmqtt-mqttPort", $('#configPort').val());
+  localStorage.setItem("vfcmqtt-mqttUser", $('#configUser').val());
+  localStorage.setItem("vfcmqtt-mqttPwd" , $('#configPwd' ).val());
 
   return location.reload(false); //false - Default. Reloads the current page from the cache
 };
-
-var sendAbrirPorta = function () {
-  if (recebendo) return true; //para não processar o click quando está recebendo a mensagem
-
-  var msg = jsonMsg;
-  msg.cmd = 'porta-open';
-  msg.value = 'true';
-
-  mqtt_Publish_Cmd(msg)
-
-  return true;
-};
-
-var sendLigarLEDs = function () {
-  if (recebendo) return true; //para não processar o click quando está recebendo a mensagem
-
-  var msg = jsonMsg;
-  msg.cmd = 'leds-on';
-  msg.value = 'true';
-
-  mqtt_Publish_Cmd(msg)
-
-  return true;
-};
-
-btnAbrirPorta.addEventListener('click', sendAbrirPorta);
-btnLigarLEDs.addEventListener('click', sendLigarLEDs);
 
 btnReconnect.addEventListener('click', mqtt_Reconnect);
 btnSaveConfig.addEventListener('click', saveConfig);

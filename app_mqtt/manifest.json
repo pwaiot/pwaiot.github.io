@@ -1,6 +1,6 @@
 {
-  "name": "Vfc PWA IoT",
-  "short_name": "Vfc PwaIoT",
+  "name": "Vfc Mqtt",
+  "short_name": "Vfc Mqtt",
   "theme_color": "#353b3f",
   "background_color": "#bfc6cc",
   "display": "standalone",

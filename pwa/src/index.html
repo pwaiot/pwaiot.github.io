@@ -22,7 +22,7 @@
 	<meta name=msapplication-TileImage content=statics/icons/icon192.png>
 	<meta name=msapplication-TileColor content=#ffffff>
 
-	<title>PWA / IOT</title>
+	<title>Vfc PWA IoT</title>
 
 	<script src="https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js"></script>
 	<script>
@@ -54,7 +54,6 @@
 	<link crossorigin='anonymous' href='https://use.fontawesome.com/releases/v5.5.0/css/all.css' rel='stylesheet' integrity='sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU'>
 	
 	<link rel="stylesheet" href="css/materialize.css">
-	<link rel="stylesheet" href="css/toggle.css">
 	<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -91,18 +90,19 @@
 
 										<p>
 											<div class="container" style="text-align:center;">
-												<button class="btn material-btn material-btn_lg">Abrir Porta</button>
+												<button id="btnAbrirPorta" name="btnAbrirPorta" class="btn material-btn material-btn_lg">    Abrir Porta    </button>
 											</div>
 										</p>
+										<br><br>
 										<p>
 											<div class="container" style="text-align:center;">
-												<button class="btn material-btn material-btn_lg material-btn_primary">Ligar LED´s WS2812b</button>
+												<button id="btnLigarLEDs" name="btnLigarLEDs" class="btn material-btn material-btn_lg material-btn_primary">Ligar LED´s WS2812b</button>
 											</div>
 										</p>
 
 										<div class="form-group materail-input-block materail-input-block_warning">
-											<label class="aria-label" for="a1_msg">Conexão Servidor:</label>
-											<input id="a1_msg"
+											<label class="aria-label" for="edt_server_msg">Conexão Servidor:</label>
+											<input id="edt_server_msg"
 													class="form-control materail-input text-danger"
 													type="text"
 													placeholder="conexão servidor"
