@@ -10,6 +10,9 @@
 ## Libraries
 https://github.com/tzapu/WiFiManager
 
+## Dark Arduino Theme
+https://github.com/jeffThompson/DarkArduinoTheme
+
 
 
 ## To upload files to ESP8266 SPIFFS (your web page):

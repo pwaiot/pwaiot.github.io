@@ -1,10 +1,33 @@
 #include <config.h> //copy "config.example.h" to "config.h" and edit it
 #include <Time.h>
 #include <TimeLib.h>
-//#include "mqtt_brocker.h" //server mode
-#include "mqtt_client.h" //client mode
 
 #include <ArduinoJson.h>
+
+
+
+
+#include <PubSubClient.h> // Import the PubSubClient Library
+
+#ifdef USE_ESP32
+  #include <WiFi.h>
+  #include <ESPmDNS.h>
+#endif
+#ifdef USE_ESP8266
+  #include <ESP8266WiFi.h>
+  #include <ESP8266mDNS.h>
+#endif  
+
+typedef void (*mqttclient_datacallback) (String topic, String message);
+
+//Prototypes
+void mqttclient_setup();
+void mqttclient_publish(String msg);
+void mqttclient_handle();
+void mqttclient_setCallback(mqttclient_datacallback cb);
+
+
+
 
 //Global variables and objects
 String sensorA1Temp = "0"; //A1 Temp Sensor
@@ -12,14 +35,11 @@ String sensorA2Temp = "0"; //A2 Temp Sensor
 
 //Prototypes
 void mqttcom_setup();
-void mqttcom_initialValues();
-void mqttcom_sendSensors();
 void mqttcom_handleClient();
 
 //private
 void initMQTT();
 void mqttcom_callback(String topic, String msg);
-void refreshMQTTSensors();
 void FormatAndSendMQTTMsg(String cmd, String value, bool valueIsString = true);
 
 void readAndSendA1Temp();
@@ -39,7 +59,6 @@ String queueMQTT = "";
 void mqttcom_setup() {
     initMQTT();
     sensors_Setup();
-    //initial values is set by main program //refreshMQTTSensors(); //initial values from sensors
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void initMQTT() {
@@ -107,11 +126,6 @@ void mqttcom_callback(String topic, String msg) {
         } else if (String(appMsgCmd) == "a2-therm-on") {
           varBool = ( String(appMsgValue) == "true" );
           sensorA2Thermo_Power(varBool);
-
-        } else if (String(appMsgCmd) == "initvalues") {
-          //send initial values for fast refresh
-          //read and sendo to server
-          refreshMQTTSensors();
         }
     }
 }
@@ -195,46 +209,9 @@ void readAndSendA2Thermo() {
   FormatAndSendMQTTMsg("a2-therm-on", varStr);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void refreshMQTTSensors() {
-  readAndSendA1Temp();
-  delay(250); //delay for mqtt brocker
-  readAndSendA2Temp();
-  delay(250); //delay for mqtt brocker
-  
-  readAndSendLedStrip();
-  delay(250); //delay for mqtt brocker
-  readAndSendA1Color();
-  delay(250); //delay for mqtt brocker
-  readAndSendRelayLight();
-  delay(250); //delay for mqtt brocker
-
-  readAndSendA1Fan();
-  delay(250); //delay for mqtt brocker
-  readAndSendA2Fan();
-  delay(250); //delay for mqtt brocker
-  
-  readAndSendA1Thermo();
-  delay(250); //delay for mqtt brocker
-  readAndSendA2Thermo();
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void mqttcom_sendSensors() {   
-    //sends the status of all sensors to the Broker in the expected protocol
-    refreshMQTTSensors();
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // main program
 void mqttcom_handleClient() {   
   mqttclient_handle();
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void mqttcom_initialValues() {
-  //write initial values
-  sensorA2_Power(true);  
-  sensorA1_Power(true);
-
-  //read and sendo to server
-  refreshMQTTSensors();
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 String formatDigits(int digits) {
@@ -249,5 +226,78 @@ String formatDigits(int digits) {
 String getFormatedDateTime() {
    String str = String(year()) + "-" + formatDigits(month()) + "-" + formatDigits(day()) + " " + formatDigits(hour()) + ":" + formatDigits(minute()) + ":" + formatDigits(second());
    return str;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+WiFiClient espClient; // Creates the espClient object
+PubSubClient MQTT(espClient); // Instantiate the MQTT Client by passing the espClient object
+mqttclient_datacallback returnCb;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void mqttclient_setCallback(mqttclient_datacallback cb) {
+  returnCb = cb;
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void data_callback(char* topic, byte* payload, unsigned int length) {
+  String msg;
+  String strTopic = String((char*)topic);
+
+  USESERIAL.print("MQTT topic received: ");
+  USESERIAL.println(strTopic);
+    
+  if(strTopic == SUBSCRIBE_COMMANDS) {
+      //get the payload string received
+      for(int i = 0; i < length; i++) {
+         char c = (char)payload[i];
+         msg += c;
+      }
+
+      returnCb(strTopic, msg);
+  }
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void mqttclient_setup() {
+  MQTT.setServer(BROKER_MQTT, BROKER_PORT); //informs which broker and port should be connected
+  MQTT.setCallback(data_callback);    //assigns callback function (called function when any information of one of the subscript topics arrives)
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void reconnectMQTT() {
+  while (!MQTT.connected()) {
+    USESERIAL.print("* Attempting to connect to the MQTT Broker: ");
+    USESERIAL.println(BROKER_MQTT);
+    
+    if (MQTT.connect(ID_MQTT, BROKER_USER, BROKER_PWD)) {
+        USESERIAL.println("Successfully connected to MQTT broker!");
+        MQTT.subscribe(SUBSCRIBE_COMMANDS); 
+    } else {
+        USESERIAL.println("Failed to reconnect to broker.");
+        USESERIAL.println("There will be a new connection attempt in 2s");
+        delay(2000);
+    }
+  }
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void CheckConnMQTT(void) {
+  if (!MQTT.connected()) 
+    reconnectMQTT(); //if there is no connection to the Broker, the connection is redone
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void mqttclient_publish(String msg) {
+  MQTT.publish(PUBLISH_DASHBOARD, msg.c_str());
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// main program
+void mqttclient_handle() {   
+  //ensures WiFi connections and MQTT broker operation
+  CheckConnMQTT();
+
+  //keep-alive da comunicação com broker MQTT
+  MQTT.loop();
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

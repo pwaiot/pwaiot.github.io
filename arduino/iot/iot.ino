@@ -22,7 +22,7 @@
 #define _TASK_TIMECRITICAL // Support for layered scheduling priority
 
 //global includes
-#include <config.h> //copy "config.example.h" to "config.h" and edit it
+#include "config.h" //copy "config.example.h" to "config.h" and edit it
 
 #ifdef USE_ESP32
   #include <WiFi.h>
@@ -50,8 +50,6 @@ Scheduler runner;
 //Task( unsigned long aInterval, long aIterations, TaskCallback aCallback, Scheduler* aScheduler, bool aEnable, TaskOnEnable aOnEnable, TaskOnDisable aOnDisable )
 Task taskLed       (  500, TASK_FOREVER, &ledCallback              , &runner, true);
 Task taskMQTTRec   (  100, TASK_FOREVER, &mqttcom_handleClient     , &runner, false); //fast receive
-Task taskMQTTSend  (10000, TASK_FOREVER, &mqttcom_sendSensors      , &runner, false); //lazy send
-Task taskLoadOnInit(  300, TASK_ONCE   , &mqttcom_initialValues    , &runner, false); //set and send initial values //start and die
 Task taskWebTime   ( 1000, TASK_ONCE   , &webtime_handle           , &runner, false); //NTP web time
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,7 +72,6 @@ void setup() {
   webtime_setup();
   
   taskMQTTRec.enable();
-  taskMQTTSend.enable();
   taskWebTime.enable();
   USESERIAL.println("all tasks initialized successfully");
 }
