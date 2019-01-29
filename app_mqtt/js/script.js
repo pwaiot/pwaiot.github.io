@@ -19,11 +19,6 @@ var mqttTimeout = 5;
 
 //console.log('port:', mqttPort);
 
-var btnSaveConfig = document.getElementById('btnSaveConfig');
-var btnReconnect  = document.getElementById('btnReconnect');
-
-//var recebendo = false; //impedir q seja enviado novamente um comando enquanto está recebendo um status do mesmo - exemplo on/off luz
-
 $('#configHost').val(mqttHost);
 $('#configPort').val(mqttPort);
 $('#configUser').val(mqttUser);
@@ -85,26 +80,19 @@ client._disconnected = function () {
 
 //Gets called whenever you receive a message for your subscriptions
 client.onMessageArrived = function (message) {
-  //recebendo = true; //para não processar o click quando está recebendo a mensagem
-
   try {
-    if (message.destinationName == topicDsBrd) {
-      //convert to JSON object
-      //console.log('mqtt message received: ', message.payloadString);
-      var obj = jsonRetMsg;
-      obj = JSON.parse(message.payloadString);
+    //convert to JSON object
+    //console.log('mqtt message received: ', message.payloadString);
+    var obj = jsonRetMsg;
+    obj = JSON.parse(message.payloadString);
 
-      //console.log('objeto recebido: ');
-      //console.log(obj);
-      mqtt_PrintAndShowLogMsg('Tópico: ' + message.destinationName);
-      mqtt_PrintAndShowLogMsg('objeto recebido: ');
-      mqtt_PrintAndShowLogMsg(JSON.stringify(obj));
-      //mqtt_PrintAndShowLogMsg(obj.cmd);
-      //mqtt_PrintAndShowLogMsg(obj.value);
-
-    } else {
-      console.log('tópico não encontrado: ' + message.destinationName)
-    }
+    //console.log('objeto recebido: ');
+    //console.log(obj);
+    mqtt_PrintAndShowLogMsg('Tópico: ' + message.destinationName);
+    mqtt_PrintAndShowLogMsg('objeto recebido: ');
+    mqtt_PrintAndShowLogMsg(JSON.stringify(obj));
+    //mqtt_PrintAndShowLogMsg(obj.cmd);
+    //mqtt_PrintAndShowLogMsg(obj.value);
   }
   catch(err) {
     console.log("Error: " + err + ".");
@@ -125,10 +113,10 @@ var publish = function (payload, topic, qos) {
   client.send(message);
 };
 
-function mqtt_Reconnect() {
+/*function mqtt_Reconnect() {
   //reconnect not working
   location.reload(false); //false - Default. Reloads the current page from the cache
-}
+}*/
 
 function mqtt_Connect() {
   mqtt_PrintAndShowLogMsg('Conectando...');
@@ -187,16 +175,3 @@ function mqtt_PrintAndShowLogMsg(msg) {
   $('#divlogs').prepend('<span>' + msg + '</span><br/>');
   $("#edt_server_msg").val(msg);
 }
-
-var saveConfig = function () {
-  /* saved in the localStorage form data */
-  localStorage.setItem("vfcmqtt-mqttHost", $('#configHost').val());
-  localStorage.setItem("vfcmqtt-mqttPort", $('#configPort').val());
-  localStorage.setItem("vfcmqtt-mqttUser", $('#configUser').val());
-  localStorage.setItem("vfcmqtt-mqttPwd" , $('#configPwd' ).val());
-
-  return location.reload(false); //false - Default. Reloads the current page from the cache
-};
-
-btnReconnect.addEventListener('click', mqtt_Reconnect);
-btnSaveConfig.addEventListener('click', saveConfig);

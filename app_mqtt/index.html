@@ -15,20 +15,11 @@
 	<link rel="shortcut icon" href="statics/icons/favicon16.png">
 
 	<meta name=theme-color content=#027be3>
-	<meta name=apple-mobile-web-app-capable content=yes>
-	<meta name=apple-mobile-web-app-status-bar-style content=#ffffff>
-	<meta name=apple-mobile-web-app-title content='Vfc Mqtt'>
-	<link rel=apple-touch-icon href=statics/icons/icon180.png>
-	<meta name=msapplication-TileImage content=statics/icons/icon192.png>
-	<meta name=msapplication-TileColor content=#ffffff>
 
 	<title>Vfc Mqtt</title>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-	<!-- <script src="js/jquery.slim.min.js"></script>
-	<link crossorigin="anonymous" rel="stylesheet" href="css/bootstrap.min.css">  -->
 
 	<link crossorigin="anonymous" href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<link crossorigin='anonymous' href='https://use.fontawesome.com/releases/v5.5.0/css/all.css' rel='stylesheet' integrity='sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU'>
@@ -45,64 +36,13 @@
 			<li class="active"> <a href="#logs1" class="material-tabs__tab-link" data-toggle="tab">
 				<i class="large material-icons">list</i>
 			</a></li>
-			<li><a href="#config1" class="material-tabs__tab-link" data-toggle="tab">
-				<i class="large material-icons">settings</i>
-			</a></li>
 		</ul>
 
 		<div class="tab-content materail-tabs-content">
-			<div class="tab-pane fade" id="logs1">
-				<div class="divlog" id="divlogs"></div>
-			</div>
 
-			<div class="tab-pane fade" id="config1">
+			<div id="logs1">
 				<div class="main-container__section">
-	
-					<div class="row">
-						<button id="btnReconnect" name="btnReconnect" class="btn material-btn material-btn_success main-container__column">Reconectar</button>
-						<button id="btnSaveConfig" name="btnSaveConfig" class="btn material-btn material-btn_danger main-container__column">Salvar Conf.</button>
-	        </div>
-					
-					<br>
-					<div class="form-group materail-input-block materail-input-block_warning">
-						<label class="aria-label" for="configHost">MQTT Host:</label>
-						<input id="configHost"
-									class="form-control materail-input"
-									type="text"
-									placeholder="mqtt host"
-						>
-						<span class="materail-input-block__line"></span>
-					</div>
-
-					<div class="form-group materail-input-block materail-input-block_warning">
-						<label class="aria-label" for="configPort">MQTT Port:</label>
-						<input id="configPort"
-									class="form-control materail-input"
-									type="text"
-									placeholder="mqtt websockets port"
-						>
-						<span class="materail-input-block__line"></span>
-					</div>
-
-					<div class="form-group materail-input-block materail-input-block_warning">
-						<label class="aria-label" for="configUser">MQTT Usuário:</label>
-						<input id="configUser"
-									class="form-control materail-input"
-									type="text"
-									placeholder="seu usuário mqtt"
-						>
-						<span class="materail-input-block__line"></span>
-					</div>
-
-					<div class="form-group materail-input-block materail-input-block_warning">
-						<label class="aria-label" for="configPwd">MQTT Senha:</label>
-						<input id="configPwd"
-									class="form-control materail-input"
-									type="text"
-									placeholder="sua senha mqtt"
-						>
-						<span class="materail-input-block__line"></span>
-					</div>
+					<div class="divlog" id="divlogs"></div>
 				</div>
 			</div>
 
