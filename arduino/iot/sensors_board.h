@@ -1,5 +1,6 @@
 #include <config.h>
 
+// ----------------------------------------------
 //mapping pinout GPIO - NodeMcu v3 / D1 Mini
 #define ADC0  00 //Analog Pin 0
 #define D0    16 //User / Wake // [NOTE: DON'T USE PIN 16 FOR NEOPIXELS]
@@ -23,28 +24,28 @@
 #define RELAY_OFF LOW
 #define RELAY_ON  HIGH
 
+//LED_PIN = (D4) - NodeMcu v3 / (D2) - D1 Mini (const BUILTIN_LED)
 #ifdef BOARD_NODEMCU
-  #define LED_PIN             D4 //(D4) - NodeMcu v3 / (D2) - D1 Mini (const BUILTIN_LED)
-  #define RELAY_A1_HEATER_PIN D2 //(D2) - NodeMcu v3 / (D4) - D1 Mini
+  #define LED_PIN      D4
+
+  #define RELAY_PIN    D1
+  #define LED_RING_PIN D2
 #endif
 #ifdef BOARD_D1_MINI
-  #define LED_PIN             D2 //(D4) - NodeMcu v3 / (D2) - D1 Mini (const BUILTIN_LED)
-  #define RELAY_A1_HEATER_PIN D4 //(D2) - NodeMcu v3 / (D4) - D1 Mini
+  #define LED_PIN      D2
+
+  #define RELAY_PIN    D1
+  #define LED_RING_PIN D3
 #endif
 
-#define LED_A1_STRIP_PIN    D5
-#define RELAY_A2_LIGHT_PIN  D6
-#define RELAY_A1_FAN_PIN    D7
-#define RELAY_A2_FAN_PIN    D8
-#define RELAY_A2_HEATER_PIN D3
+#define RELAY_PIN    D1
+#define LED_RING_PIN D2
+// ----------------------------------------------
 
-
-
+#define LED_RING_NUM_LEDS   8
 
 
 #include <Adafruit_NeoPixel.h>
-#define NUM_LEDS   60
-//#define BRIGHTNESS 100
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = pin number (most are valid)
@@ -55,259 +56,66 @@
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_GRBW
 //   NEO_RGBW
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_A1_STRIP_PIN, NEO_GRBW + NEO_KHZ800);
-
-//Prototypes
-void ledstrip_setup();
-void ledstrip_PowerLight(bool onOff);
-void ledstrip_SetColor(byte red, byte green, byte blue, byte white);
-byte ledstrip_GetColorRed();
-byte ledstrip_GetColorGreen();
-byte ledstrip_GetColorBlue();
-byte ledstrip_GetColorWhite();
-
-
-
-
+// Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_RING_NUM_LEDS, LED_RING_PIN, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_RING_NUM_LEDS, LED_RING_PIN, NEO_GRB + NEO_KHZ800);
 
 //prototypes
 void sensors_Setup();
+void relay_Power(bool onOff);
+void ledRing_Power(bool onOff);
 
-void sensorA2_Power(bool onOff);
-bool sensorA2_IsOn();
+//private
+void relay_setup();
+void ledstrip_setup();
 
-void sensorA1_Power(bool onOff);
-bool sensorA1_IsOn();
-
-void sensorA1_SetColor(byte red, byte green, byte blue, byte white);
-byte sensorA1_GetColorRed();
-byte sensorA1_GetColorGreen();
-byte sensorA1_GetColorBlue();
-byte sensorA1_GetColorWhite();
-
-String sensorA1_GetTemp();
-String sensorA2_GetTemp();
-
-void sensorA1Fan_Power(bool onOff);
-bool sensorA1Fan_IsOn();
-
-void sensorA2Fan_Power(bool onOff);
-bool sensorA2Fan_IsOn();
-
-void sensorA1Thermo_Power(bool onOff);
-bool sensorA1Thermo_IsOn();
-
-void sensorA2Thermo_Power(bool onOff);
-bool sensorA2Thermo_IsOn();
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorTemp_Setup();
-
-int localSensorA1Temp = 0;
-int localSensorA2Temp = 0;
-bool localSensorLedStripOn = false;
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void sensors_Setup() {
-  //led light
-  pinMode(RELAY_A2_LIGHT_PIN, OUTPUT); //set RELAY_A2_LIGHT_PIN as output
-  digitalWrite(RELAY_A2_LIGHT_PIN, RELAY_OFF);
+  pinMode(RELAY_PIN, OUTPUT); //set RELAY_PIN as output
+  digitalWrite(RELAY_PIN, RELAY_OFF);
 
-  //fans
-  pinMode(RELAY_A1_FAN_PIN, OUTPUT);
-  digitalWrite(RELAY_A1_FAN_PIN, RELAY_OFF);
-  
-  pinMode(RELAY_A2_FAN_PIN, OUTPUT);
-  digitalWrite(RELAY_A2_FAN_PIN, RELAY_OFF);
+  //pinMode(LED_RING_PIN, OUTPUT);
+  //digitalWrite(LED_RING_PIN, RELAY_OFF);
 
-  //heaters
-  pinMode(RELAY_A1_HEATER_PIN, OUTPUT);
-  digitalWrite(RELAY_A1_HEATER_PIN, RELAY_OFF);
-  
-  pinMode(RELAY_A2_HEATER_PIN, OUTPUT);
-  digitalWrite(RELAY_A2_HEATER_PIN, RELAY_OFF);
-
-  //led strip
   ledstrip_setup();
+  relay_setup();
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorTemp_Setup() {
-  /////////////ledstrip_setup();
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bool sensorA2_IsOn() {
-  int val = digitalRead(RELAY_A2_LIGHT_PIN);
-  //USESERIAL.print("sensorA2_IsOn");
-  //USESERIAL.println(val);
-
-  return (val == RELAY_ON);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bool sensorA1Fan_IsOn() {
-  int val = digitalRead(RELAY_A1_FAN_PIN);
-  //USESERIAL.print("sensorA1Fan_IsOn");
-  //USESERIAL.println(val);
-
-  return (val == RELAY_ON);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bool sensorA2Fan_IsOn() {
-  int val = digitalRead(RELAY_A2_FAN_PIN);
-  //USESERIAL.print("sensorA2Fan_IsOn");
-  //USESERIAL.println(val);
-
-  return (val == RELAY_ON);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bool sensorA1Thermo_IsOn() {
-  int val = digitalRead(RELAY_A1_HEATER_PIN);
-  //USESERIAL.print("sensorA1Thermo_IsOn");
-  //USESERIAL.println(val);
-
-  return (val == RELAY_ON);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bool sensorA2Thermo_IsOn() {
-  int val = digitalRead(RELAY_A2_HEATER_PIN);
-  //USESERIAL.print("sensorA2Thermo_IsOn");
-  //USESERIAL.println(val);
-
-  return (val == RELAY_ON);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-bool sensorA1_IsOn() {
-  return localSensorLedStripOn;
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA1_SetColor(byte red, byte green, byte blue, byte white) {
-  ledstrip_SetColor(red, green, blue, white);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-byte sensorA1_GetColorRed() {
-  return ledstrip_GetColorRed();
-}
-byte sensorA1_GetColorGreen() {
-  return ledstrip_GetColorGreen();
-}
-byte sensorA1_GetColorBlue() {
-  return ledstrip_GetColorBlue();
-}
-byte sensorA1_GetColorWhite() {
-  return ledstrip_GetColorWhite();
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA2_Power(bool onOff) {
-  if (onOff == true) {
+void relay_Power(bool onOff) {
+/*  if (onOff == true) {
     //USESERIAL.println("RELAY_ON");
-    digitalWrite(RELAY_A2_LIGHT_PIN, RELAY_ON);
+    digitalWrite(RELAY_PIN, RELAY_ON);
   } else {
     //USESERIAL.println("RELAY_OFF");
-    digitalWrite(RELAY_A2_LIGHT_PIN, RELAY_OFF);
-  }
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA1Fan_Power(bool onOff) {
-  int value = 0;
-  if (onOff == true) {
-    //USESERIAL.println("RELAY_A1_FAN_ON");
-    value = RELAY_ON;
-  } else {
-    //USESERIAL.println("RELAY_A1_FAN_OFF");
-    value = RELAY_OFF;
-  }
+    digitalWrite(RELAY_PIN, RELAY_OFF);
+  } */
 
-  digitalWrite(RELAY_A1_FAN_PIN, value);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA2Fan_Power(bool onOff) {
-  int value = 0;
-  if (onOff == true) {
-    //USESERIAL.println("RELAY_A2_FAN_ON");
-    value = RELAY_ON;
-  } else {
-    //USESERIAL.println("RELAY_A2_FAN_OFF");
-    value = RELAY_OFF;
-  }
-
-  digitalWrite(RELAY_A2_FAN_PIN, value);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA1Thermo_Power(bool onOff) {
-  int value = 0;
-  if (onOff == true) {
-    //USESERIAL.println("RELAY_A1_HEATER_ON");
-    value = RELAY_ON;
-  } else {
-    //USESERIAL.println("RELAY_A1_HEATER_OFF");
-    value = RELAY_OFF;
-  }
-
-  digitalWrite(RELAY_A1_HEATER_PIN, value);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA2Thermo_Power(bool onOff) {
-  int value = 0;
-  if (onOff == true) {
-    //USESERIAL.println("RELAY_A2_HEATER_ON");
-    value = RELAY_ON;
-  } else {
-    //USESERIAL.println("RELAY_A2_HEATER_OFF");
-    value = RELAY_OFF;
-  }
-
-  digitalWrite(RELAY_A2_HEATER_PIN, value);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void sensorA1_Power(bool onOff) {
-  localSensorLedStripOn = onOff;
-  ledstrip_PowerLight(onOff);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-String sensorA1_GetTemp() {
-    localSensorA1Temp++;
-
-    //char cstr[16];
-    //itoa(sensor, cstr, 10);
-    //sprintf(cstr, "%05d", num);
-    //sprintf_P(cstr, (PGM_P)F("%02d:%02d:%02d"), hours, minutes, seconds);
-    //sprintf_P(cstr, (PGM_P)F("%05d"), sensor);
-
-    //convert to char* and format to 5 digits
-    //sprintf(cstr, "%05d", sensor);
-    //return String(cstr);
-
-    return String(localSensorA1Temp);
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-String sensorA2_GetTemp() {
-    localSensorA2Temp++;
-
-    localSensorA2Temp++; //plus
-    
-    return String(localSensorA2Temp);
+  digitalWrite(RELAY_PIN, RELAY_ON);
+  delay(1000); //wait 1s for power off
+  digitalWrite(RELAY_PIN, RELAY_OFF);
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
-
-
-
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void relay_setup() {
+  //flash relay
+  relay_Power(true);
+  delay(500);
+  relay_Power(true);
+  delay(500);
+  relay_Power(true);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 //private
 void showStrip();
-void setPixel(int Pixel, byte red, byte green, byte blue, byte white);
-void setAll(byte red, byte green, byte blue, byte white);
+void setPixel(int Pixel, byte red, byte green, byte blue);
+void setAll(byte red, byte green, byte blue);
 
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
-
-//initial values
-byte pColorRed = 0;
-byte pColorGreen = 0;
-byte pColorBlue = 0;
-byte pColorWhite = 255;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Helper function for rainbows
@@ -348,11 +156,12 @@ void ledstrip_setup() {
   //strip.setBrightness(BRIGHTNESS); //setBrightness() was intended to be called once, in setup()
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
-  setAll(0, 0, 0, 0); //fix all to empty
+  setAll(0, 0, 0); //fix all to empty
   delay(100);
   rainbowCycle(1);//Flash rainbows at the begining
   USESERIAL.println("rainbowCycle");
-  delay(50);
+  delay(1000);
+  setAll(0, 0, 0); //fix all to empty
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void showStrip() {
@@ -366,59 +175,39 @@ void showStrip() {
  #endif
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void setPixel(int Pixel, byte red, byte green, byte blue, byte white) {
+void setPixel(int Pixel, byte red, byte green, byte blue) {
  #ifdef ADAFRUIT_NEOPIXEL_H
    // NeoPixel
-   strip.setPixelColor(Pixel, strip.Color(red, green, blue, white));
+   strip.setPixelColor(Pixel, strip.Color(red, green, blue));
  #endif
  #ifndef ADAFRUIT_NEOPIXEL_H
    // FastLED
    leds[Pixel].r = red;
    leds[Pixel].g = green;
    leds[Pixel].b = blue;
-   leds[Pixel].w = white;
+   //leds[Pixel].w = white;
  #endif
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void setAll(byte red, byte green, byte blue, byte white) {
-  for(int i = 0; i < NUM_LEDS; i++ ) {
-    setPixel(i, red, green, blue, white);
+void setAll(byte red, byte green, byte blue) {
+  for(int i = 0; i < LED_RING_NUM_LEDS; i++ ) {
+    setPixel(i, red, green, blue);
   }
   showStrip();
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void ledstrip_PowerLight(bool onOff) {
-  if (onOff) {
+void ledRing_Power(bool onOff) {
+/*  if (onOff) {
     USESERIAL.println("ligando luz branca");
-    setAll(0, 0, 0, 0); //clear all
-    setAll(pColorRed, pColorGreen, pColorBlue, pColorWhite);
+    setAll(0, 0, 0); //clear all
   } else {
     USESERIAL.println("desligando tudo");
-    setAll(0, 0, 0, 0);
-  }
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void ledstrip_SetColor(byte red, byte green, byte blue, byte white) {
-  setAll(red, green, blue, white);
-}
-
-byte ledstrip_GetColorRed() {
-  uint32_t myColor = strip.getPixelColor(0);
-  return (uint8_t) ((myColor >> 16) & 0xFF);
-}
-
-byte ledstrip_GetColorGreen() {
-  uint32_t myColor = strip.getPixelColor(0);
-  return (uint8_t) ((myColor >> 8) & 0xFF);
-}
-
-byte ledstrip_GetColorBlue() {
-  uint32_t myColor = strip.getPixelColor(0);
-  return (uint8_t) ((myColor) & 0xFF);
-}
-
-byte ledstrip_GetColorWhite() {
-  uint32_t myColor = strip.getPixelColor(0);
-  return (uint8_t) ((myColor >> 24) & 0xFF);
+    setAll(0, 0, 0);
+  } */
+  setAll(0, 0, 0); //fix all to empty
+  delay(100);
+  rainbowCycle(1);//Flash rainbows at the begining
+  delay(1000);
+  setAll(0, 0, 0); //fix all to empty
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

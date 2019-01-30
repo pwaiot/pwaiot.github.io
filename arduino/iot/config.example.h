@@ -18,7 +18,7 @@ const char* ssid     = "ssid_to_connect"
 const char* password = "ssid_password"
 
 //hostname
-#define MY_HOSTNAME "aquacontrol"
+#define MY_HOSTNAME "vfcpwaiot"
 
 //------------------
 //mqtt configuration
@@ -38,9 +38,8 @@ const char* BROKER_PWD  = "";
                                                        //           chances of you controlling and monitoring NodeMCU
                                                        //           of another person.
 
-#define ID_MQTT  "VfcAquaControl" //id mqtt (for session identification)
+#define ID_MQTT  "VfcEspPwaIoT"   //id mqtt (for session identification)
                                   //IMPORTANT: This must be unique in the broker (in other words,
                                   //           if an MQTT client attempts to enter the same
                                   //           id of another already connected to the broker, the broker
                                   //           will close the connection of one of them).
-                                
