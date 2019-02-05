@@ -1,4 +1,4 @@
-#include <config.h> //copy "config.example.h" to "config.h" and edit it
+#include <config.h>
 #include <Time.h>
 #include <TimeLib.h>
 #include <ArduinoJson.h>
