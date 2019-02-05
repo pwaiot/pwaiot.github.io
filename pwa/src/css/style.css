@@ -364,9 +364,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 .material-btn_primary:focus,
 .material-btn_primary:active {
-	background-color: #3488d1;
-	border-color: #3488d1;
-	color: #fff
+	background-color: #0b3a63;
+	border-color: #03121f;
+	color: rgb(0, 0, 0)
 }
 .material-btn_success {
   background-color: #68c368;
